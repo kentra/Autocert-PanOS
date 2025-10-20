@@ -1,5 +1,7 @@
 # letsencrypt_domeneshop_paloalto
 
+This project is a heavily modified fork of https://github.com/psiri/letsencrypt_paloalto. Credit to the original author for foundational work.
+
 This project automates the process of obtaining Let's Encrypt SSL certificates using Certbot for domains managed by Domeneshop and deploying them to Palo Alto Networks firewalls.
 
 ## Features
