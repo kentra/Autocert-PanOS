@@ -1,11 +1,11 @@
 [project]
 name = "letsencrypt-domeneshop-paloalto"
 version = "0.1.0"
-description = "Add your description here"
+description = "LetsEncrypt certificates for your Palo Alto Networks Firewalls! Can be adapted to work with most vendor makes/models."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pan-python",
-                "certbot",
-                "certbot-dns-domeneshop",
+    "certbot",
+    "certbot-dns-domeneshop",
 ]
