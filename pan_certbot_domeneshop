@@ -5,14 +5,22 @@ DOMENESHOP_ENV=$(PWD)/.secrets/certbot/.domeneshop.env
 PANOS_ENV=$(PWD)/.secrets/pan-python/.panos.env
 
 # Tools
-PANXAPI=$(PWD)/.venv/bin/panxapi.py
-CERTBOT=$(PWD)/.venv/bin/certbot
+PANXAPI="$(PWD)/.venv/bin/panxapi.py"
+CERTBOT="$(PWD)/.venv/bin/certbot"
 REQUIRED_CMDS=("openssl" "curl" "$CERTBOT" "$PANXAPI") # List of required commands
-WORK_DIR="$(PWD)/.certbot"
-CONFIG_DIR="$WORK_DIR/config"
-LOG_DIR="$WORK_DIR/log"
-CERT_DIR="$WORK_DIR/letsencrypt/live"
+WORK_DIR="$(PWD)"
+CONFIG_DIR="$WORK_DIR/letsencrypt"
+LOG_DIR="$CONFIG_DIR/log"
+PFX="$CONFIG_DIR/letsencrypt_pkcs12.pfx"
+# CERT_DIR="$CONFIG_DIR"
 
+# Create Dirs
+mkdir -p $CONFIG_DIR
+mkdir -p $LOG_DIR
+mkdir -p $CONFIG_DIR
+# Fix permissions
+chmod -R 600 $DOMENESHOP_ENV
+chmod -R 600 $PANOS_ENV
 
 
 # Load DOMENESHOP_ENV if it exists
@@ -64,27 +72,28 @@ TEMP_PWD=$(openssl rand -hex 15)
 
 
 GenCerts() {
-    sudo $CERTBOT certonly \
+    $CERTBOT certonly \
         --authenticator dns-domeneshop \
         --dns-domeneshop-credentials $DOMENESHOP_ENV \
         --dns-domeneshop-propagation-seconds 120 \
         -d $FQDN \
         --agree-tos \
-        --work_dir $WORK_DIR \
-        --config_dir $CONFIG_DIR \
-        --log_dir $LOG_DIR
-        #--quiet
+        --work-dir $WORK_DIR \
+        --config-dir $CONFIG_DIR \
+        --logs-dir $LOG_DIR \
+        -m $EMAIL \
+        --quiet
+        # --dry-run \
 }
 
 UploadCerts() {
     #Depending on your setup, certbot may not give you separate files for the certificate and chain.  This script expects separate files.
-    sudo mkdir -p $CERT_DIR/$FQDN
-    sudo openssl pkcs12 -export -out $CERT_DIR/letsencrypt_pkcs12.pfx -inkey $CERT_DIR/$FQDN/privkey.pem -in $CERT_DIR/$FQDN/cert.pem -certfile $CERT_DIR/$FQDN/cert.pem -passout pass:$TEMP_PWD
-    if [ -e $CERT_DIR/letsencrypt_pkcs12.pfx ]; then
+    openssl pkcs12 -export -out $PFX -inkey $CONFIG_DIR/live/$FQDN/privkey.pem -in $CONFIG_DIR/live//$FQDN/cert.pem -certfile $CONFIG_DIR/live//$FQDN/cert.pem -passout pass:$TEMP_PWD
+    if [ -e $PFX ]; then
         echo "...Uploading certificate: $CERT_NAME"
-        curl -k --form file=@$CERT_DIR/letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
-        curl -k --form file=@$CERT_DIR/letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=private-key&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
-        sudo rm $CERT_DIR/letsencrypt_pkcs12.pfx
+        curl -k --form file=@$PFX "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
+        curl -k --form file=@$PFX "https://$PAN_MGMT/api/?type=import&category=private-key&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
+        # rm $PFX
         #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'TLS_PROFILE' variable with the name of your GlobalProtect Portal's SSL/TLS Service Profile, as it appears in your management GUI.
         echo "...Changing SSL-TLS profiles"
         panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$TLS_PROFILE']"
@@ -107,9 +116,9 @@ if [[ "$PACERT" == *'status="success" code="19"'* ]]; then
     # A certificate with CERT_NAME value is present, the code bellow will check if the expiry date matches with local certificate
     PAEXPIRYDATE=$(echo $PACERT | awk -F'<not-valid-after[^>]*>|</not-valid-after>' '{print $2}')
     echo "Palo Alto $CERT_NAME expiry date: $PAEXPIRYDATE"
-    if [ -e $CERT_DIR/$FQDN/cert.pem ]; then
+    if [ -e $CONFIG_DIR/$FQDN/cert.pem ]; then
         # Extracts expiry date from local certificate and checks against PA
-        FILEEXPIRYDATE=$(openssl x509 -enddate -noout -in $CERT_DIR/$FQDN/cert.pem | awk -F'=' '{print $2}')
+        FILEEXPIRYDATE=$(openssl x509 -enddate -noout -in $CONFIG_DIR/$FQDN/cert.pem | awk -F'=' '{print $2}')
         echo "File expiry date: $FILEEXPIRYDATE"
         if [[ -n "$PAEXPIRYDATE" && -n "$FILEEXPIRYDATE" ]]; then
             if [[ "$PAEXPIRYDATE" == "$FILEEXPIRYDATE" ]]; then
@@ -129,7 +138,7 @@ if [[ "$PACERT" == *'status="success" code="19"'* ]]; then
     fi
 elif [[ "$PACERT" == *'status="success" code="7"'* ]]; then
     echo "Certificate with name $CERT_NAME is not present in Palo Alto"
-    if [ -e $CERT_DIR/$FQDN/cert.pem ]; then
+    if [ -e $CONFIG_DIR/$FQDN/cert.pem ]; then
         # If the local certificate for the FQDN exists but isn't present on Palo Alto, it will try to load the certificate
         echo "Certificate exists locally, uploading to Palo Alto."
         UpdateCerts
