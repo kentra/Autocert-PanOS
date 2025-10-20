@@ -1,5 +1,5 @@
 [project]
-name = "letsencrypt-domeneshop-paloalto"
+name = "autocert_panos"
 version = "0.1.0"
 description = "LetsEncrypt certificates for your Palo Alto Networks Firewalls! Can be adapted to work with most vendor makes/models."
 readme = "README.md"
@@ -8,4 +8,30 @@ dependencies = [
     "pan-python",
     "certbot",
     "certbot-dns-domeneshop",
+    "pyopenssl>=25.3.0",
+    "cryptography>=46.0.3",
+    "pydantic>=2.12.3",
+    "loguru>=0.7.3",
+    "pydantic-settings>=2.11.0",
+    "pan-os-python>=1.12.3",
+    "graphviz>=0.21",
+    "httpx>=0.28.1",
 ]
+
+
+[dependency-groups]
+dev = [
+    "ipython>=9.6.0",
+    "pytest>=8.4.2",
+]
+lint = [
+    "ruff>=0.14.1",
+]
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["autocert_panos*"]
