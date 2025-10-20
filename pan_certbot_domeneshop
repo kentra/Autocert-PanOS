@@ -1,5 +1,16 @@
 #!/bin/bash
-CLOUDFLARE_CREDS=<FULL_PATH_TO>/cloudflare.ini
+
+# Load .env if it exists
+if [ -f .env ]; then
+  echo "Loading environment variables from .env"
+  set -a       # automatically export all variables
+  source .env  # load the file
+  set +a       # stop exporting automatically
+else
+  echo ".env file not found!"
+fi
+
+DOMENESHOP_CREDS=.secrets/certbot/.domeneshop.ini
 PAN_MGMT=<FW_MGMT_FQDN_OR_IP>
 FQDN=<CERTIFICATE_FQDN(s)>
 EMAIL=<EMAIL_ADDRESS>
@@ -8,10 +19,64 @@ CERT_NAME=LetsEncryptWildcard
 GP_PORTAL_TLS_PROFILE=GP_PORTAL_PROFILE
 GP_GW_TLS_PROFILE=GP_EXT_GW_PROFILE
 TEMP_PWD=$(openssl rand -hex 15)
-#Requirements: openssl, pan-python, certbot
+
+
+# Checking for requirements:
+# openssl, pan-python, certbot
+check_requirements() {
+    local missing=0
+
+    # List of required commands
+    REQUIRED_CMDS=("openssl" "curl" "certbot")
+
+    echo "Checking required commands..."
+    for cmd in "${REQUIRED_CMDS[@]}"; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            echo "Missing command: $cmd"
+            missing=1
+        else
+            echo "Found: $cmd"
+        fi
+    done
+
+    # Check required files
+    if [ ! -f "$DOMENESHOP_CREDS" ]; then
+        echo "Missing credentials file: $DOMENESHOP_CREDS"
+        missing=1
+    fi
+    if [ ! -f "$API_KEY" ]; then
+        echo "Missing API key file: $API_KEY"
+        missing=1
+    fi
+
+    # Check required variables
+    REQUIRED_VARS=("PAN_MGMT" "FQDN" "EMAIL" "CERT_NAME")
+    echo "Checking required environment variables..."
+    for var in "${REQUIRED_VARS[@]}"; do
+        if [ -z "${!var}" ]; then
+            echo "Variable $var is not set"
+            missing=1
+        else
+            echo "$var = ${!var}"
+        fi
+    done
+
+    if [ "$missing" -ne 0 ]; then
+        echo "Exiting due to missing requirements."
+        exit 1
+    fi
+
+    echo "All requirements satisfied."
+}
+
+# Run this at the top
+check_requirements
+
+
+
 
 GenCerts() {
-    # sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $CLOUDFLARE_CREDS -d *.$FQDN -n --agree-tos --no-eff-email --quiet
+    # sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $DOMENESHOP_CREDS -d *.$FQDN -n --agree-tos --no-eff-email --quiet
     sudo /usr/local/bin/certbot certonly \
         --authenticator dns-domeneshop \
         --dns-domeneshop-credentials ~/.secrets/certbot/domeneshop.ini \
