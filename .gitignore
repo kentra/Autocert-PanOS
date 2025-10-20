@@ -6,7 +6,7 @@ __pycache__/
 *$py.class
 # Secrets
 .secrets/certbot/.domeneshop.env
-.secrets/pan-python/.panos.env
+.secrets/panos/.panos.env
 .cert/letsencrypt/*
 # C extensions
 *.so
