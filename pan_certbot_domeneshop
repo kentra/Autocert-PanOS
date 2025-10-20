@@ -1,34 +1,36 @@
 #!/bin/bash
 
-# Load .env if it exists
-if [ -f .env ]; then
-  echo "Loading environment variables from .env"
-  set -a       # automatically export all variables
-  source .env  # load the file
-  set +a       # stop exporting automatically
-else
-  echo ".env file not found!"
-fi
-
-DOMENESHOP_CREDS=.secrets/certbot/.domeneshop.ini
-PAN_MGMT=<FW_MGMT_FQDN_OR_IP>
-FQDN=<CERTIFICATE_FQDN(s)>
-EMAIL=<EMAIL_ADDRESS>
-API_KEY=$(cat FULL_PATH_TO/.panrc)
-CERT_NAME=LetsEncryptWildcard
-GP_PORTAL_TLS_PROFILE=GP_PORTAL_PROFILE
-GP_GW_TLS_PROFILE=GP_EXT_GW_PROFILE
+# Config
+DOMENESHOP_ENV=.secrets/certbot/.domeneshop.env
+PANOS_ENV=.secrets/pan-python/.panos.env
+REQUIRED_CMDS=("openssl" "curl" "certbot") # List of required commands
 TEMP_PWD=$(openssl rand -hex 15)
 
 
+# Load DOMENESHOP_ENV if it exists
+if [ -f $DOMENESHOP_ENV ]; then
+  echo "Loading environment variables from $DOMENESHOP_ENV"
+  set -a       # automatically export all variables
+  source $DOMENESHOP_ENV  # load the file
+  set +a       # stop exporting automatically
+else
+  echo "$DOMENESHOP_ENV file not found!"
+fi
+
+# Load PANOS_ENV if it exists
+if [ -f $PANOS_ENV ]; then
+  echo "Loading environment variables from $PANOS_ENV"
+  set -a       # automatically export all variables
+  source $PANOS_ENV  # load the file
+  set +a       # stop exporting automatically
+else
+  echo "$PANOS_ENV file not found!"
+fi
+
+
 # Checking for requirements:
-# openssl, pan-python, certbot
 check_requirements() {
     local missing=0
-
-    # List of required commands
-    REQUIRED_CMDS=("openssl" "curl" "certbot")
-
     echo "Checking required commands..."
     for cmd in "${REQUIRED_CMDS[@]}"; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -36,28 +38,6 @@ check_requirements() {
             missing=1
         else
             echo "Found: $cmd"
-        fi
-    done
-
-    # Check required files
-    if [ ! -f "$DOMENESHOP_CREDS" ]; then
-        echo "Missing credentials file: $DOMENESHOP_CREDS"
-        missing=1
-    fi
-    if [ ! -f "$API_KEY" ]; then
-        echo "Missing API key file: $API_KEY"
-        missing=1
-    fi
-
-    # Check required variables
-    REQUIRED_VARS=("PAN_MGMT" "FQDN" "EMAIL" "CERT_NAME")
-    echo "Checking required environment variables..."
-    for var in "${REQUIRED_VARS[@]}"; do
-        if [ -z "${!var}" ]; then
-            echo "Variable $var is not set"
-            missing=1
-        else
-            echo "$var = ${!var}"
         fi
     done
 
@@ -76,12 +56,12 @@ check_requirements
 
 
 GenCerts() {
-    # sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $DOMENESHOP_CREDS -d *.$FQDN -n --agree-tos --no-eff-email --quiet
+    # sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $DOMENESHOP_ENV -d *.$FQDN -n --agree-tos --no-eff-email --quiet
     sudo /usr/local/bin/certbot certonly \
         --authenticator dns-domeneshop \
-        --dns-domeneshop-credentials ~/.secrets/certbot/domeneshop.ini \
+        --dns-domeneshop-credentials ~/.secrets/certbot/domeneshop.env \
         --dns-domeneshop-propagation-seconds 120 \
-        -d *.$FQDN \
+        -d $FQDN \
         --agree-tos \
         --no-eff-email \
         --quiet
