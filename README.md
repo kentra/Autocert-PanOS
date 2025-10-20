@@ -1,4 +1,4 @@
-# letsencrypt_domeneshop_paloalto
+# 🔥 letsencrypt_domeneshop_paloalto
 
 *This project is a heavily modified fork of [https://github.com/psiri/letsencrypt_paloalto](https://github.com/psiri/letsencrypt_paloalto). Credit to the original author for foundational work.*
 
@@ -20,7 +20,7 @@ This tool is ideal for network administrators and security engineers looking to 
 - **Multi-Domain and Multi-Firewall Support:** Manage multiple domains and deploy to multiple firewalls.
 - **Scheduled Renewals:** Supports cron or scheduler-based automated renewals and deployments.
 - **Detailed Logging:** Comprehensive logs for troubleshooting and audit purposes.
-- **Configurable:** Flexible YAML-based configuration for easy customization.
+- **Configurable:** Flexible .env-based configuration for easy customization.
 
 ---
 
@@ -83,55 +83,48 @@ letsencrypt_domeneshop_paloalto/
 2. **Create a virtual environment (recommended):**
 
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   uv venv
+   source .venv/bin/activate
    ```
 
 3. **Install dependencies:**
 
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
-
-4. **Install Certbot:**
-
-   Follow instructions from [Certbot's official site](https://certbot.eff.org/) to install Certbot on your system.
 
 ---
 
 ## Configuration
 
-The main configuration is stored in `config.yaml`. Below is a sample configuration structure:
+This project uses `.env` files to manage sensitive credentials and configuration parameters. These files are located in the `.secrets/` directory:
 
-```yaml
-domains:
-  - example.com
-  - www.example.com
+- `.secrets/certbot/.domeneshop.env` for Domeneshop DNS API credentials
+- `.secrets/pan-python/.panos.env` for Palo Alto firewall API credentials
 
-domeneshop:
-  api_key: YOUR_DOMENESHOP_API_KEY
-  api_secret: YOUR_DOMENESHOP_API_SECRET
+### Example `.secrets/certbot/.domeneshop.env`
 
-paloalto:
-  firewalls:
-    - host: firewall1.example.com
-      api_key: FIREWALL1_API_KEY
-    - host: firewall2.example.com
-      api_key: FIREWALL2_API_KEY
-
-certbot:
-  email: admin@example.com
-  staging: false
-  cert_path: /etc/letsencrypt/live/example.com
-  renew_before_expiry_days: 30
+```env
+DOMENESHOP_API_KEY=your_domeneshop_api_key_here
+DOMENESHOP_API_SECRET=your_domeneshop_api_secret_here
+DOMAINS=example.com,www.example.com
+CERTBOT_EMAIL=admin@example.com
+CERTBOT_STAGING=false
+CERT_PATH=/etc/letsencrypt/live/example.com
+RENEW_BEFORE_EXPIRY_DAYS=30
 ```
 
-- **domains:** List of domains to secure.
-- **domeneshop:** Credentials for Domeneshop DNS API.
-- **paloalto:** List of Palo Alto firewalls with their API keys.
-- **certbot:** Certbot related settings.
+### Example `.secrets/pan-python/.panos.env`
 
-Make sure to replace placeholders with your actual credentials.
+```env
+FIREWALL_1_HOST=firewall1.example.com
+FIREWALL_1_API_KEY=firewall1_api_key_here
+
+FIREWALL_2_HOST=firewall2.example.com
+FIREWALL_2_API_KEY=firewall2_api_key_here
+```
+
+Replace the placeholder values with your actual credentials and domain names.
 
 ---
 
@@ -162,7 +155,7 @@ The project uses Certbot's DNS-01 challenge with custom hooks to add and remove 
 After obtaining or renewing certificates, the deployment script uploads them to the configured Palo Alto firewalls:
 
 ```bash
-python main.py
+./pan_certbot_domeneshop 
 ```
 
 This script will:
@@ -204,15 +197,6 @@ This runs the script daily at 3 AM.
 
 ---
 
-## Roadmap
-
-- Support for wildcard certificates.
-- Enhanced logging and alerting.
-- Web UI for monitoring.
-- Support for other DNS providers.
-- Integration with Palo Alto Panorama.
-
----
 
 ## Contributing
 
@@ -234,3 +218,5 @@ MIT License
 ## Credits
 
 This project is a heavily modified fork of [https://github.com/psiri/letsencrypt_paloalto](https://github.com/psiri/letsencrypt_paloalto). Many thanks to the original author for their foundational work and inspiration.
+
+And special thanks to **ChatGPT** for making this **README.md** 😁
