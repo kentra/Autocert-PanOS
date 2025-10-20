@@ -9,6 +9,21 @@ dependencies = [
     "certbot",
     "certbot-dns-domeneshop",
     "pyopenssl>=25.3.0",
-    "ipython>=9.6.0",
     "cryptography>=46.0.3",
+    "pydantic>=2.12.3",
+    "loguru>=0.7.3",
+    "pydantic-settings>=2.11.0",
+    "pan-os-python>=1.12.3",
+    "graphviz>=0.21",
+    "httpx>=0.28.1",
+]
+
+
+[dependency-groups]
+dev = [
+    "ipython>=9.6.0",
+    "pytest>=8.4.2",
+]
+lint = [
+    "ruff>=0.14.1",
 ]
