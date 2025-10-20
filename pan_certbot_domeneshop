@@ -9,10 +9,9 @@ PANXAPI="$(PWD)/.venv/bin/panxapi.py"
 CERTBOT="$(PWD)/.venv/bin/certbot"
 REQUIRED_CMDS=("openssl" "curl" "$CERTBOT" "$PANXAPI") # List of required commands
 WORK_DIR="$(PWD)"
-CONFIG_DIR="$WORK_DIR/letsencrypt"
+CONFIG_DIR="$WORK_DIR/domeneshop"
 LOG_DIR="$CONFIG_DIR/log"
 PFX="$CONFIG_DIR/letsencrypt_pkcs12.pfx"
-# CERT_DIR="$CONFIG_DIR"
 
 # Create Dirs
 mkdir -p $CONFIG_DIR
@@ -88,7 +87,7 @@ GenCerts() {
 
 UploadCerts() {
     #Depending on your setup, certbot may not give you separate files for the certificate and chain.  This script expects separate files.
-    openssl pkcs12 -export -out $PFX -inkey $CONFIG_DIR/live/$FQDN/privkey.pem -in $CONFIG_DIR/live//$FQDN/cert.pem -certfile $CONFIG_DIR/live//$FQDN/cert.pem -passout pass:$TEMP_PWD
+    openssl pkcs12 -export -out $PFX -inkey $CONFIG_DIR/live/$CERT_NAME/privkey.pem -in $CONFIG_DIR/live//$CERT_NAME/cert.pem -certfile $CONFIG_DIR/live//$CERT_NAME/cert.pem -passout pass:$TEMP_PWD
     if [ -e $PFX ]; then
         echo "...Uploading certificate: $CERT_NAME"
         curl -k --form file=@$PFX "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
@@ -132,19 +131,19 @@ if [[ "$PACERT" == *'status="success" code="19"'* ]]; then
         fi
     else
         # If the local certificate for the FQDN doesn't exist, it will try to renew and load the new certificate
-        echo "Certificate for $FQDN not found, generating new certificate."
+        echo "Certificate for $CERT_NAME not found, generating new certificate."
         GenCerts
         UploadCerts
     fi
 elif [[ "$PACERT" == *'status="success" code="7"'* ]]; then
     echo "Certificate with name $CERT_NAME is not present in Palo Alto"
-    if [ -e $CONFIG_DIR/$FQDN/cert.pem ]; then
+    if [ -e $CONFIG_DIR/$CERT_NAME/cert.pem ]; then
         # If the local certificate for the FQDN exists but isn't present on Palo Alto, it will try to load the certificate
         echo "Certificate exists locally, uploading to Palo Alto."
         UpdateCerts
     else
         # If the certificate for FQDN doesn't exist both locally and in Palo Alto, it will try to renew and load the new certificate
-        echo "Certificate for $FQDN not found! generating new certificate!"
+        echo "Certificate for $CERT_NAME not found! generating new certificate!"
         GenCerts
         UploadCerts
     fi
