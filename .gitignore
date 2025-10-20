@@ -1,3 +1,4 @@
+.cert
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -5,6 +6,7 @@ __pycache__/
 # Secrets
 .secrets/certbot/.domeneshop.env
 .secrets/pan-python/.panos.env
+.cert/letsencrypt/*
 # C extensions
 *.so
 
