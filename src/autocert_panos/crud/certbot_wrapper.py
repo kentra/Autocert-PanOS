@@ -23,9 +23,9 @@ class CertbotWrapper:
             "--authenticator",
             "dns-domeneshop",
             "--dns-domeneshop-credentials",
-            "/Users/daniko/Code/Autocert-PanOS/.secrets/certbot/.domeneshop.env",  # or direct field if you have it
+            "/Users/daniko/Code/Autocert-PanOS/.secrets/certbot/.certbot.env",  # or direct field if you have it
             "--dns-domeneshop-propagation-seconds",
-            str(self.cfg.DNS_SLEEP_TIME),
+            self.cfg.DNS_SLEEP_TIME,
             "--agree-tos",
             "--non-interactive",
             "--config-dir",
@@ -58,7 +58,7 @@ class CertbotWrapper:
 
         result = subprocess.run(args, capture_output=True, text=True)
         if result.returncode != 0:
-            logger.error(f"Certbot failed: {result.stderr}")
+            logger.error(f"🤦 Certbot failed: {result.stderr}")
             raise RuntimeError(f"Certbot error: {result.stderr}")
 
         logger.info(f"Certbot succeeded: {result.stdout}")

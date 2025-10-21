@@ -8,14 +8,14 @@ class Panos(BaseSettings):
         env_file=("/Users/daniko/Code/Autocert-PanOS/.secrets/panos/.panos.env"),
         env_file_encoding="utf-8",
     )
-    MGMT: str
+    HOST: str
     API_KEY: SecretStr
     TLS_PROFILE: str
 
 
 class CertBot(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=("/Users/daniko/Code/Autocert-PanOS/.secrets/certbot/.domeneshop.env"),
+        env_file=("/Users/daniko/Code/Autocert-PanOS/.secrets/certbot/.certbot.env"),
         env_file_encoding="utf-8",
     )
     dns_domeneshop_client_token: str  # SecretStr
@@ -27,3 +27,6 @@ class CertBot(BaseSettings):
     CONFIG_DIR: str
     WORK_DIR: str
     LOGS_DIR: str
+    PFX_DIR: str
+    PFX_NAME: str
+    PFX_PW: SecretStr

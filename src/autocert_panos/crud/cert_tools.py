@@ -5,26 +5,25 @@ from cryptography.hazmat.primitives.serialization import (
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography import x509
 import os
+from pydantic_settings import BaseSettings
 
 
 class CertTools:
-    def __init__(
-        self,
-        private_key_path: str,
-        cert_path: str,
-        ca_chain_path: str,
-        output_path: str,
-        cert_friendly_name: str,
-        password: str = os.urandom(16).hex(),
-    ) -> None:
-        self.private_key_path = private_key_path
-        self.cert_path = cert_path
-        self.ca_chain_path = ca_chain_path
-        self.output_path = output_path
-        self.cert_friendly_name = cert_friendly_name
-        self.password = password
+    def __init__(self, certbot_cfg: BaseSettings) -> None:
+        self.private_key_path = (
+            f"{certbot_cfg.CONFIG_DIR}/live/{certbot_cfg.CERT_NAME}/privkey.pem"
+        )
+        self.cert_path = (
+            f"{certbot_cfg.CONFIG_DIR}/live/{certbot_cfg.CERT_NAME}/cert.pem"
+        )
+        self.ca_chain_path = (
+            f"{certbot_cfg.CONFIG_DIR}/live/{certbot_cfg.CERT_NAME}/fullchain.pem"
+        )
+        self.pfx_path = certbot_cfg.PFX_DIR
+        self.pfx_name = certbot_cfg.PFX_NAME
+        self.pfx_pw = certbot_cfg.PFX_PW.get_secret_value()
 
-    def pem_to_pkcs12(self) -> None:
+    def convert_pem_to_pkcs12(self) -> None:
         """
         Creates a PKCS#12 (.pfx) file equivalent to:
         openssl pkcs12 -export -out out.pfx -inkey privkey.pem -in cert.pem -certfile cert.pem -passout pass:<password>
@@ -58,13 +57,13 @@ class CertTools:
 
         # Serialize into PKCS#12
         pfx_data = pkcs12.serialize_key_and_certificates(
-            name=self.cert_friendly_name,  # Friendly name
+            name=bytes(self.pfx_name, encoding="utf-8"),  # Friendly name
             key=private_key,
             cert=cert,
             cas=additional_certs if additional_certs else None,
-            encryption_algorithm=BestAvailableEncryption(self.password.encode("utf-8")),
+            encryption_algorithm=BestAvailableEncryption(self.pfx_pw.encode("utf-8")),
         )
 
         # Write to file
-        with open(self.output_path, "wb") as f:
+        with open(f"{self.pfx_path}/{self.pfx_name}", "wb") as f:
             f.write(pfx_data)
