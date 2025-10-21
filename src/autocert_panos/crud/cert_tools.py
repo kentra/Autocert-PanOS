@@ -8,16 +8,23 @@ import os
 
 
 class CertTools:
-    def __init__(self) -> None:
-        None
-
-    def pem_to_pkcs12(
+    def __init__(
+        self,
         private_key_path: str,
         cert_path: str,
         ca_chain_path: str,
         output_path: str,
+        cert_friendly_name: str,
         password: str = os.urandom(16).hex(),
     ) -> None:
+        self.private_key_path = private_key_path
+        self.cert_path = cert_path
+        self.ca_chain_path = ca_chain_path
+        self.output_path = output_path
+        self.cert_friendly_name = cert_friendly_name
+        self.password = password
+
+    def pem_to_pkcs12(self) -> None:
         """
         Creates a PKCS#12 (.pfx) file equivalent to:
         openssl pkcs12 -export -out out.pfx -inkey privkey.pem -in cert.pem -certfile cert.pem -passout pass:<password>
@@ -30,17 +37,17 @@ class CertTools:
         """
 
         # Load private key
-        with open(private_key_path, "rb") as f:
+        with open(self.private_key_path, "rb") as f:
             private_key = load_pem_private_key(f.read(), password=None)
 
         # Load certificate
-        with open(cert_path, "rb") as f:
+        with open(self.cert_path, "rb") as f:
             cert = x509.load_pem_x509_certificate(f.read())
 
         # Load CA chain (can be empty or same as cert)
         additional_certs = []
-        if ca_chain_path:
-            with open(ca_chain_path, "rb") as f:
+        if self.ca_chain_path:
+            with open(self.ca_chain_path, "rb") as f:
                 for cert_data in f.read().split(b"-----END CERTIFICATE-----"):
                     cert_data = cert_data.strip()
                     if cert_data:
@@ -51,13 +58,13 @@ class CertTools:
 
         # Serialize into PKCS#12
         pfx_data = pkcs12.serialize_key_and_certificates(
-            name=b"letsencrypt",  # Friendly name
+            name=self.cert_friendly_name,  # Friendly name
             key=private_key,
             cert=cert,
             cas=additional_certs if additional_certs else None,
-            encryption_algorithm=BestAvailableEncryption(password.encode("utf-8")),
+            encryption_algorithm=BestAvailableEncryption(self.password.encode("utf-8")),
         )
 
         # Write to file
-        with open(output_path, "wb") as f:
+        with open(self.output_path, "wb") as f:
             f.write(pfx_data)

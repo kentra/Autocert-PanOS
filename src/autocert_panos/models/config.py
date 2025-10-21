@@ -1,11 +1,11 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Optional
+from typing import Optional
 from pydantic import SecretStr
 
 
 class Panos(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".secrets/panos/.panos.env"),
+        env_file=("/Users/daniko/Code/Autocert-PanOS/.secrets/panos/.panos.env"),
         env_file_encoding="utf-8",
     )
     MGMT: str
@@ -15,11 +15,11 @@ class Panos(BaseSettings):
 
 class CertBot(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".secrets/certbot/.domeneshop.env"),
+        env_file=("/Users/daniko/Code/Autocert-PanOS/.secrets/certbot/.domeneshop.env"),
         env_file_encoding="utf-8",
     )
-    DOMENESHOP_TOKEN: SecretStr
-    DOMENESHOP_SECRET: SecretStr
+    dns_domeneshop_client_token: str  # SecretStr
+    dns_domeneshop_client_secret: str  #  SecretStr
     DNS_SLEEP_TIME: str
     CERT_NAME: str
     EMAIL: Optional[str] = None

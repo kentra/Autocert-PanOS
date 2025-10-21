@@ -1,6 +1,16 @@
 from crud.certbot_wrapper import CertbotWrapper
-from models.config import Panos, CertBot
+from crud.panos_tools import PanosTools
+from crud.cert_tools import CertTools
+from models.config import CertBot, Panos
 
-certbot = CertbotWrapper(certbot_cfg=CertBot(), domeneshop_cfg=Pa)
 
-certbot.run_certbot()
+certbot_cfg = CertBot()
+panos_cfg = Panos()
+
+
+certbotWrapper = CertbotWrapper(certbot_cfg)
+
+# Run Certbot
+wrapper.run_certbot(dry_run=True)
+
+#
