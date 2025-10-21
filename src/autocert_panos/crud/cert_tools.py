@@ -8,6 +8,7 @@ import os
 from pydantic_settings import BaseSettings
 from OpenSSL import crypto
 from datetime import datetime
+from time import timezone
 
 
 class CertTools:
@@ -70,6 +71,16 @@ class CertTools:
         with open(f"{self.pfx_path}/{self.pfx_name}", "wb") as f:
             f.write(pfx_data)
 
+    # def get_cert_expiry_from_file(self):
+    #     with open(self.cert_path, "rb") as f:
+    #         cert_data = f.read()
+
+    #     cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
+    #     expiry_bytes = cert.get_notAfter()  # e.g. b'20251231235959Z'
+    #     expiry_str = expiry_bytes.decode("ascii")
+    #     expiry_date = datetime.strptime(expiry_str, "%Y%m%d%H%M%SZ")
+    #     return expiry_date
+
     def get_cert_expiry_from_file(self):
         with open(self.cert_path, "rb") as f:
             cert_data = f.read()
@@ -78,9 +89,7 @@ class CertTools:
         expiry_bytes = cert.get_notAfter()  # e.g. b'20251231235959Z'
         expiry_str = expiry_bytes.decode("ascii")
         expiry_date = datetime.strptime(expiry_str, "%Y%m%d%H%M%SZ")
-        return expiry_date
+        # expiry_date = expiry_date.replace(tzinfo=timezone.utc)
 
-    # cert_file = "mycert.pem"
-    # expiry = get_cert_expiry_from_file(cert_file)
-    # print(f"Certificate expires on: {expiry}")
-    # print(f"Days remaining: {(expiry - datetime.utcnow()).days}")
+        epoch_time = int(expiry_date.timestamp())
+        return expiry_date, epoch_time
