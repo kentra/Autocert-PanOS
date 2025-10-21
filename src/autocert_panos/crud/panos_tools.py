@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 class PanosTools:
     def __init__(self, panos_cfg: BaseSettings, certbot_cfg: BaseSettings) -> None:
         self.hostname = panos_cfg.HOST
-        self.api_key = panos_cfg.API_KEY
+        self.api_key = panos_cfg.API_KEY.get_secret_value()
         self.certbot_cfg = certbot_cfg
         self.fw = firewall.Firewall(hostname=self.hostname, api_key=self.api_key)
 
@@ -46,7 +46,7 @@ class PanosTools:
         params = {
             "type": "config",
             "action": "get",
-            "xpath": "/config/shared/certificate/entry[@name='kentra.org']",
+            "xpath": f"/config/shared/certificate/entry[@name='{cert_name}']",
             "key": self.api_key,
         }
         # xmltodict.parse(a.content)
@@ -57,6 +57,8 @@ class PanosTools:
 
         if response.status_code == 200:
             return self.__xml_to_pydantic(xml=response.content)
+        else:
+            return response
 
     def commit_config(self) -> None:
         self.fw.commit()

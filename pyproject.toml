@@ -17,6 +17,7 @@ dependencies = [
     "graphviz>=0.21",
     "httpx>=0.28.1",
     "xmltodict>=1.0.2",
+    "tqdm>=4.67.1",
 ]
 
 

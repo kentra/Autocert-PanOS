@@ -14,26 +14,26 @@ certbotWrapper = CertbotWrapper(certbot_cfg=certbot_cfg)
 certTools = CertTools(certbot_cfg=certbot_cfg)
 panosTools = PanosTools(panos_cfg=panos_cfg, certbot_cfg=certbot_cfg)
 
+
 # Run Certbot
-logger.info("🌍 Hang on! Searching for certificate..(tqdm?)")
-certbotWrapper.run_certbot(dry_run=False)
-logger.success(
-    "🎉 WOW! We are still on! Awesome! Well, let's compare the timestamp on both certs."
-)
+# logger.info("🌍 Hang on! Searching for certificate..(tqdm?)")
+# certbotResult = certbotWrapper.run_certbot(dry_run=True)
+
+# if certbotResult == "Certificate not yet due for renewal":
+#     logger.stop(f"⚠️ {certbotResult}")
+
+# Fetch old cert from Palo
 paloCert = panosTools.get_certificate(cert_name=certbot_cfg.CERT_NAME)
 if type(paloCert) is Certficate:
     # paloResp = paloCert.response.result.entry.not_valid_after.text
     logger.info(
         f"❤️‍🔥 Palo's certificate expires {paloCert.response.result.entry.not_valid_after.text} (expiry epoch: {paloCert.response.result.entry.expiry_epoch.text})"
     )
-else:
-    logger.error("Well shit.. Something went wrong..")
-logger.info("😎 Lets test the converting job PAM to PKCS12")
-certTools.convert_pem_to_pkcs12()
 
-logger.info(
-    "😬 this is a little awkward, but I don't have a way to compare the to certs yet.."
-)
+# Check local cert to compare
+checkLocalCert = certTools.get_cert_expiry_from_file()
+logger.debug(checkLocalCert)
 
-logger.info("🤷‍♂️ Oh well, lets try uploading to Palo anyway!")
-panosTools.upload_certificate()
+# logger.info("😎 Lets test the converting job PAM to PKCS12")
+# certTools.convert_pem_to_pkcs12()
+# panosTools.upload_certificate()

@@ -34,7 +34,7 @@ class CertbotWrapper:
             self.cfg.WORK_DIR,
             "--logs-dir",
             self.cfg.LOGS_DIR,
-            "--quiet",
+            # "--quiet",
         ]
 
         for domain in domains:
