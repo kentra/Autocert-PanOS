@@ -1,5 +1,5 @@
-from panos import firewall, network, device
-from app.models.config import Panos
+from panos import firewall, device
+from models.config import Panos
 import httpx
 
 

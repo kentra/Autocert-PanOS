@@ -20,6 +20,10 @@ class CertBot(BaseSettings):
     )
     DOMENESHOP_TOKEN: SecretStr
     DOMENESHOP_SECRET: SecretStr
+    DNS_SLEEP_TIME: str
     CERT_NAME: str
     EMAIL: Optional[str] = None
-    DOMAIN_LIST: List[str] = []
+    DOMAIN: str
+    CONFIG_DIR: str
+    WORK_DIR: str
+    LOGS_DIR: str

@@ -1,7 +1,7 @@
 FROM ghcr.io/astral-sh/uv:alpine3.22
 
 
-RUN apk update && apk add bash curl openssl
+RUN apk update && apk add bash
 # Copy the project into the image
 ADD . /app
 
